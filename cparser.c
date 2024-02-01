@@ -1336,7 +1336,7 @@ static void preprocess_end(TCCState *s1)
     macro_ptr = NULL;
 }
 
-void skip(int c)
+static void skip(int c)
 {
     if (tok != c)
         tcc_error("'%c' expected (got \"%s\")", c, get_tok_str(tok, &tokc));

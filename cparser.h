@@ -29,7 +29,6 @@
 #include "values.h"
 
 void next(void);
-void skip(int c);
 void parser_init();
 void parser_free();
 int add_file(TCCState *s, const char *filename);
