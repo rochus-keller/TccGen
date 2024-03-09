@@ -3002,27 +3002,27 @@ static void unary_builtins()
     }
 }
 
-static void primary_ident()
+static void primary_ident(int t)
 {
     next();
-    if (tok < TOK_UIDENT)
+    if (t < TOK_UIDENT)
         expect("identifier");
-    Sym * s = sym_find(tok);
+    Sym* s = sym_find(t);
     if (!s || IS_ASM_SYM(s)) {
-        const char *name = get_tok_str(tok, NULL);
+        const char *name = get_tok_str(t, NULL);
         if (tok != '(')
             tcc_error("'%s' undeclared", name);
         /* for simple function calls, we tolerate undeclared
            external reference to int() function */
         if (tcc_state->warn_implicit_function_declaration
-    #ifdef TCC_TARGET_PE
+#ifdef TCC_TARGET_PE
                 /* people must be warned about using undeclared WINAPI functions
-                       (which usually start with uppercase letter) */
+                                       (which usually start with uppercase letter) */
                 || (name[0] >= 'A' && name[0] <= 'Z')
-    #endif
+#endif
                 )
             tcc_warning("implicit declaration of function '%s'", name);
-        s = external_global_sym(tok, &func_old_type, 0);
+        s = external_global_sym(t, &func_old_type, 0);
     }
 
     int r = s->r;
@@ -3033,8 +3033,8 @@ static void primary_ident()
 
     vset(&s->type, r, s->c);
     /* Point to s as backpointer (even without r&VT_SYM).
-   Will be used by at least the x86 inline asm parser for
-   regvars.  */
+       Will be used by at least the x86 inline asm parser for
+       regvars.  */
     vtop->sym = s;
 
     if (r & VT_SYM) {
@@ -3261,7 +3261,7 @@ void unary_expression(void)
     case TOK___FUNCTION__:
         if (!gnu_ext)
         {
-            primary_ident();
+            primary_ident(tok);
             break;
         }
         /* fall thru */
@@ -3325,7 +3325,7 @@ void unary_expression(void)
 
     case TOK_LAND:
         if (!gnu_ext)
-            primary_ident();
+            primary_ident(tok);
         else
             unary_label_addr();
         break;
@@ -3349,7 +3349,7 @@ void unary_expression(void)
         break;
 
     default:
-        primary_ident();
+        primary_ident(tok);
         break;
     }
 
