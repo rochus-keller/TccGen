@@ -1386,7 +1386,7 @@ static void gen_opif(int op)
 #if defined _MSC_VER && defined _AMD64_
     /* avoid bad optimization with f1 -= f2 for f1:-0.0, f2:0.0 */
     volatile
-        #endif
+#endif
             long double f1, f2;
 
     v1 = vtop - 1;
