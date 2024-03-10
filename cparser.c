@@ -25,6 +25,7 @@
 #include "helper.h"
 #include "tccelf.h"
 #include "generator.h"
+#include "stab.h"
 #include <memory.h>
 #include <assert.h>
 #include <math.h>
@@ -78,6 +79,7 @@ static void expression(void);
 static void decl(int l);
 static int const_int32_expr(void);
 static void gen_inline_functions(TCCState *s);
+static void parse_number(const char *p);
 /*-----------------------------------*/
 
 static void tok_str_add2(TokenString *s, int t, CValue *cv)
@@ -406,6 +408,42 @@ static inline void next_nomacro1(void)
         file->line_num++;
         p++;
         goto redo_no_start;
+
+    case '#':
+        // support # <linenumber> [ <filename> ]
+        PEEKC(c, p);
+        file->buf_ptr = p;
+        next_nomacro1();
+        p = file->buf_ptr;
+        if( tok != TOK_PPNUM )
+            tcc_error("expecting a number after #", c);
+        else
+        {
+            parse_number((const char*)tokc.str.data);
+            int n = tokc.i;
+            while(*p == ' ')
+                p++;
+            if ( *p != '\n' && *p != '\r' ) {
+                next();
+                p = file->buf_ptr;
+                if (tok == TOK_STR) {
+                    if (file->true_filename == file->filename)
+                        file->true_filename = tcc_strdup(file->filename);
+                    pstrcpy(file->filename, sizeof(file->filename), (char *)tokc.str.data);
+                }else
+                    tcc_error("expecting filename after # <linenumber>", c);
+                --n;
+            }
+            file->line_num = n;
+            if (tcc_state->do_debug)
+                put_stabs(file->filename, N_BINCL, 0, 0, 0);
+            while(*p == ' ')
+                p++;
+            if ( *p != '\n' && *p != '\r' )
+                tcc_error("expecting # <linenumber> [ <filename> ]", c);
+            goto redo_no_start;
+        }
+        break;
 
     /* dollar is allowed to start identifiers when not parsing asm */
     case '$':
@@ -1856,11 +1894,11 @@ static void struct_union_decl(CType *type, CType type1, Sym* s, int u, Attribute
             }
             if (v != 0 || (type1.t & VT_BTYPE) == VT_STRUCT) {
                 /* Remember we've seen a real field to check
-       for placement of flexible array member. */
+                   for placement of flexible array member. */
                 c = 1;
             }
             /* If member is a struct or bit-field, enforce
-       placing into the struct (as anonymous).  */
+               placing into the struct (as anonymous).  */
             if (v == 0 &&
                     ((type1.t & VT_BTYPE) == VT_STRUCT ||
                      bit_size >= 0)) {
@@ -4932,10 +4970,10 @@ static int decl0(int l, int is_for_loop_init, Sym *func_sym)
         while (1) { /* iterate thru each declaration */
             type = btype;
             /* If the base type itself was an array type of unspecified
-           size (like in 'typedef int arr[]; arr x = {1};') then
-           we will overwrite the unknown size by the real one for
-           this decl.  We need to unshare the ref symbol holding
-           that size.  */
+               size (like in 'typedef int arr[]; arr x = {1};') then
+               we will overwrite the unknown size by the real one for
+               this decl.  We need to unshare the ref symbol holding
+               that size.  */
             if ((type.t & VT_ARRAY) && type.ref->c < 0) {
                 type.ref = sym_push(SYM_FIELD, &type.ref->type, 0, type.ref->c);
             }

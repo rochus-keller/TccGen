@@ -31,7 +31,7 @@ typedef struct BufferedFile {
     struct BufferedFile *prev;
     int line_num;    /* current line number - here to simplify code */
     char filename[1024];    /* filename, was in BufferedFile */
-    char *true_filename; /* filename not modified by # line directive */
+    char *true_filename; /* filename not modified by #line directive */
     unsigned char unget[4];
     unsigned char buffer[1]; /* extra size for CH_EOB char */
 } BufferedFile;
